@@ -62,6 +62,7 @@ int scsi_Set_Max_LBA(tDevice *device, uint64_t newMaxLBA, bool reset)
     //always do a mode sense command to get back a block descriptor. Always request default values because if we are doing a reset, we just send it right back, otherwise we will overwrite the returned data ourselves
     if (SUCCESS == scsi_Mode_Sense_10(device, 0, 0x18, 0, false, true, MPC_DEFAULT_VALUES, scsiDataBuffer))
     {
+        newMaxLBA += 1;//Need to add 1 for SCSI so that this will match the -i report. If this is not done, then  we end up with 1 less than the value provided.
         scsiDataBuffer[0] = 0;
         scsiDataBuffer[1] = 0;//clear out the mode datalen
         scsiDataBuffer[3] = 0;//clear the device specific parameter
@@ -92,7 +93,7 @@ int scsi_Set_Max_LBA(tDevice *device, uint64_t newMaxLBA, bool reset)
             scsiDataBuffer[MODE_PARAMETER_HEADER_10_LEN + 7] = 0xFF;
         }
         //now issue the mode select 10 command
-        ret = scsi_Mode_Select_10(device, 0x18, true, true, scsiDataBuffer, 0x18);
+        ret = scsi_Mode_Select_10(device, 0x18, true, true, false, scsiDataBuffer, 0x18);
         if (ret == SUCCESS)
         {
             if (reset)
